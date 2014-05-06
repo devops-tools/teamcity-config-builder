@@ -8,6 +8,38 @@
       <option name="executionTimeoutMin" value="5" />
       <option name="maximumNumberOfBuilds" value="1" />
     </options>
+    <parameters>
+      <param name="drop_folder" value="\\ppsdevfs02\buildartifacts\ukdvap065\{0}\{1}" />
+    </parameters>
+    <steps>
+      <step id="RUNNER_298" name="Delete drop folder" type="jetbrains_powershell">
+        <properties>
+          <property name="jetbrains_powershell_bitness" value="x86"/>
+          <property name="jetbrains_powershell_execution" value="STDIN"/>
+          <property name="jetbrains_powershell_noprofile" value="true"/>
+          <property name="jetbrains_powershell_script_code" value="if (Test-Path &quot;%drop_folder%\%build.number%&quot;) {&#xA;  Remove-Item -Recurse -Force &quot;%drop_folder%\%build.number%&quot;&#xA;}"/>
+          <property name="jetbrains_powershell_script_mode" value="CODE"/>
+          <property name="teamcity.step.mode" value="default"/>
+        </properties>
+      </step>
+      <step id="RUNNER_305" name="Drop artifacts" type="jetbrains_powershell">
+        <properties>
+          <property name="jetbrains_powershell_bitness" value="x86"/>
+          <property name="jetbrains_powershell_errorToError" value="true"/>
+          <property name="jetbrains_powershell_execution" value="STDIN"/>
+          <property name="jetbrains_powershell_noprofile" value="true"/>
+          <property name="jetbrains_powershell_script_code" value=".\robocopy.ps1 -source &quot;%teamcity.build.checkoutDir%&quot; -target &quot;%drop_folder%\%build.number%&quot; -exclude @(&quot;*.xml&quot;,&quot;*.pdb&quot;,&quot;*.config&quot;,&quot;robocopy.ps1&quot;) -folder_exclude @(&quot;Scripts&quot;)&#xA;.\robocopy.ps1 -source &quot;%teamcity.build.checkoutDir%\Scripts&quot; -target &quot;%drop_folder%\%build.number%\Scripts&quot; -include @(&quot;*.ps1&quot;, &quot;*.xml&quot;)"/>
+          <property name="jetbrains_powershell_script_mode" value="CODE"/>
+          <property name="teamcity.step.mode" value="default"/>
+        </properties>
+      </step>
+    </steps>
+    <vcs-root-entries>
+      <vcs-root-entry id="{0}">
+        <vcs-root id="{0}" name="{1}" href="/httpAuth/app/rest/vcs-roots/id:{0}"/>
+        <checkout-rules></checkout-rules>
+      </vcs-root-entry>
+    </vcs-root-entries>
     <artifact-dependencies>
       <artifact-dependency id="0" type="artifact_dependency">
         <properties>

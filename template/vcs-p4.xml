@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vcs-root id="{0}" name="{1}" vcsName="perforce" href="/httpAuth/app/rest/vcs-roots/id:{0}">
+  <project id="{2}" name="{3}" href="/httpAuth/app/rest/projects/id:{2}"/>
+  <properties>
+    <property name="client-mapping" value="{4}/... //team-city-agent/..."/>
+    <property name="p4-exe" value="p4"/>
+    <property name="port" value="perforce.bfl.local:1666"/>
+    <property name="use-client" value="false"/>
+    <property name="user" value="{5}"/>
+    <property name="secure:passwd" value="{6}"/>
+    <property name="workspace-options" value="Options:        noallwrite noclobber nocompress unlocked nomodtime normdir&#xA;SubmitOptions:  revertunchanged&#xA;LineEnd:        local"/>
+  </properties>
+  <vcsRootInstances href="/httpAuth/app/rest/vcs-root-instances?locator=vcsRoot:(id:{0})"/>
+</vcs-root>

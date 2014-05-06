@@ -40,7 +40,7 @@
           <property name="vs.version" value="vs2012"/>
         </properties>
       </step>
-      <step id="RUNNER_23" name="Run unit tests" type="MSTest" disabled="true">
+      <step id="RUNNER_23" name="Run unit tests" type="MSTest">
         <properties>
           <property name="dotNetCoverage.NCover.HTMLReport.File.Sort" value="0"/>
           <property name="dotNetCoverage.NCover.HTMLReport.File.Type" value="1"/>
@@ -64,9 +64,12 @@
         </properties>
       </step>
     </steps>
-    <vcs-settings checkout-mode="ON_SERVER" labeling-type="NONE" labeling-pattern="build-%system.build.number%">
-      <vcs-entry-ref root-id="Beazley_AgressoVendors" set-label="false" />
-    </vcs-settings>
+    <vcs-root-entries>
+      <vcs-root-entry id="{0}">
+        <vcs-root id="{0}" name="{1}" href="/httpAuth/app/rest/vcs-roots/id:{0}"/>
+        <checkout-rules></checkout-rules>
+      </vcs-root-entry>
+    </vcs-root-entries>
     <requirements>
       <exists name="DotNetFramework4.0_x86" />
       <exists name="system.MSTest.11.0" />
@@ -88,7 +91,6 @@
         </properties>
       </feature>
     </features>
-    <artifact-publishing paths="Source/Beazley.AgressoVendors.Endpoint/bin/release =&gt; Beazley.AgressoVendors.zip!Release&#xA;Scripts =&gt; Beazley.AgressoVendors.zip!Scripts" />
     <cleanup />
   </settings>
 </build-type>

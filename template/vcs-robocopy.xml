@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<vcs-root id="{0}" name="{1}" vcsName="jetbrains.git" href="/httpAuth/app/rest/vcs-roots/id:{0}">
+  <project id="{2}" name="{3}" href="/httpAuth/app/rest/projects/id:{2}"/>
+  <properties>
+    <property name="agentCleanFilesPolicy" value="ALL_UNTRACKED"/>
+    <property name="agentCleanPolicy" value="ON_BRANCH_CHANGE"/>
+    <property name="authMethod" value="ANONYMOUS"/>
+    <property name="branch" value="refs/heads/master"/>
+    <property name="ignoreKnownHosts" value="true"/>
+    <property name="submoduleCheckout" value="CHECKOUT"/>
+    <property name="url" value="http://git.bfl.local/gist/7.git"/>
+    <property name="username" value="svc_tcbuild_dev"/>
+    <property name="usernameStyle" value="USERID"/>
+  </properties>
+  <vcsRootInstances href="/httpAuth/app/rest/vcs-root-instances?locator=vcsRoot:(id:{0})"/>
+</vcs-root>

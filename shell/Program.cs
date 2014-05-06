@@ -51,9 +51,19 @@ namespace TeamCityConfigBuilder.Shell
                             }
                             foreach (var param in xml.Descendants("param").Select(x => new { Name = x.Attribute("name").Value, x.Attribute("value").Value }))
                             {
-                                Put(
-                                    string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/parameters/", param.Name),
-                                    param.Value);
+                                switch (param.Name)
+                                {
+                                    case "drop_folder":
+                                        Put(
+                                            string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/parameters/", param.Name),
+                                            string.Format(param.Value, buildProject.Name, buildProject.Branch));
+                                        break;
+                                    default:
+                                        Put(
+                                            string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/parameters/", param.Name),
+                                            param.Value);
+                                        break;
+                                }
                             }
                             foreach (var stepXml in xml.Descendants("step").Select(x => x.ToString()))
                             {
@@ -82,6 +92,28 @@ namespace TeamCityConfigBuilder.Shell
                                             string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/settings/artifactRules"),
                                             string.Format("{0}\nScripts => artifacts.zip!Scripts", string.Join("\n", buildProject.Artifacts.Select(x => string.Format("{0} => artifacts.zip!{1}", Path.Combine("Source", x.RelativePath), x.Name)))));
                                     }
+                                    if (!string.IsNullOrWhiteSpace(buildProject.VcsRoot) && buildProject.VcsRoot.StartsWith("//depot/", StringComparison.InvariantCultureIgnoreCase))
+                                    {
+                                        Post(
+                                                string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/vcs-roots"),
+                                                string.Format(File.ReadAllText(Path.Combine(ConfigurationManager.AppSettings.Get("TemplateFolder"), "vcs-p4.xml")),
+                                                    string.Concat(tcp.Id, "_Source"),
+                                                    "Source",
+                                                    tcp.Id,
+                                                    tcp.Name,
+                                                    buildProject.VcsRoot,
+                                                    "svc_tcbuild_dev",
+                                                    "zxx99860a5d5a21aa52ec3295a7ca7d1819"));
+                                        foreach (var vcsRootXml in xml.Descendants("vcs-root-entry").Select(x => x.ToString()))
+                                        {
+                                            Post(
+                                                string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/vcs-root-entries"),
+                                                string.Format(vcsRootXml,
+                                                    string.Concat(tcp.Id, "_Source"),
+                                                    "Source"));
+                                        }
+                                        
+                                    }
                                     break;
                                 case "Drop":
                                     foreach (var dependencyXml in xml.Descendants("artifact-dependency").Select(x => x.ToString()))
@@ -104,6 +136,24 @@ namespace TeamCityConfigBuilder.Shell
                                                 tcp.Id,
                                                 tcp.Name));
                                     }
+                                    Post(
+                                            string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/vcs-roots"),
+                                            string.Format(File.ReadAllText(Path.Combine(ConfigurationManager.AppSettings.Get("TemplateFolder"), "vcs-robocopy.xml")),
+                                                string.Concat(tcp.Id, "_RoboCopy"),
+                                                "RoboCopy",
+                                                tcp.Id,
+                                                tcp.Name));
+                                    foreach (var vcsRootXml in xml.Descendants("vcs-root-entry").Select(x => x.ToString()))
+                                    {
+                                        Post(
+                                            string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/vcs-root-entries"),
+                                            string.Format(vcsRootXml,
+                                                string.Concat(tcp.Id, "_RoboCopy"),
+                                                "RoboCopy"));
+                                    }
+                                    Put(
+                                        string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/settings/artifactRules"),
+                                        @"%drop_folder%\%build.number% => artifacts.zip");
                                     break;
                                 case "Release":
                                     foreach (var dependencyXml in xml.Descendants("artifact-dependency").Select(x => x.ToString()))
@@ -204,7 +254,7 @@ namespace TeamCityConfigBuilder.Shell
                 var credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(up), Base64FormattingOptions.None);
                 client.Headers[HttpRequestHeader.Authorization] = "Basic " + credentials;
                 client.Headers[HttpRequestHeader.ContentType] = "application/xml";
-                client.UploadString(url, payload);
+                var response = client.UploadString(url, payload);
             }
         }
 
@@ -216,7 +266,7 @@ namespace TeamCityConfigBuilder.Shell
                 var credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(up), Base64FormattingOptions.None);
                 client.Headers[HttpRequestHeader.Authorization] = "Basic " + credentials;
                 client.Headers[HttpRequestHeader.ContentType] = "text/plain";
-                client.UploadString(url, "PUT", payload);
+                var response = client.UploadString(url, "PUT", payload);
             }
         }
     }

@@ -8,6 +8,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{46
 		template\build.xml = template\build.xml
 		template\drop.xml = template\drop.xml
 		template\release.xml = template\release.xml
+		template\vcs-p4.xml = template\vcs-p4.xml
+		template\vcs-robocopy.xml = template\vcs-robocopy.xml
 	EndProjectSection
 EndProject
 Global

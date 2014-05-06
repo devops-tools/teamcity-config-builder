@@ -14,10 +14,15 @@ namespace TeamCityConfigBuilder.Shell
             Solution = new Solution(solutionPath);
             Artifacts = new List<Artifact>();
             Artifacts.AddRange(Solution.Projects.Where(x => x.OutputClass != OutputClass.ClassLibrary).Select(x => new Artifact(x.ProjectName, Path.Combine(Path.GetDirectoryName(x.RelativePath), x.OutputPath), x.OutputClass)));
+            if (SolutionDirectory != null && SolutionDirectory.Contains("\\depot\\"))
+            {
+                VcsRoot = '/' + Path.GetDirectoryName(SolutionDirectory).Substring(SolutionDirectory.IndexOf("\\depot\\")).Replace('\\', '/');
+            }
         }
 
         public string Name { get; private set; }
         public string SolutionDirectory { get; private set; }
+        public string VcsRoot { get; private set; }
         public string Branch { get; private set; }
         public Solution Solution { get; private set; }
         public List<Artifact> Artifacts { get; private set; }

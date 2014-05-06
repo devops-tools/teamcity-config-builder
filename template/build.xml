@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<build-type>
+  <name>Beazley.AgressoVendors.Endpoint</name>
+  <description />
+  <settings>
+    <options>
+      <option name="allowExternalStatus" value="true" />
+      <option name="buildNumberPattern" value="%version_major%.%version_minor%.%version_patch%.%build.counter%" />
+      <option name="cleanBuild" value="true" />
+      <option name="executionTimeoutMin" value="5" />
+      <option name="maximumNumberOfBuilds" value="1" />
+    </options>
+    <parameters>
+      <param name="version_major" value="1" />
+      <param name="version_minor" value="0" />
+      <param name="version_patch" value="1" />
+    </parameters>
+    <steps>
+      <step id="RUNNER_211" name="Restore Packages" type="jb.nuget.installer">
+        <properties>
+          <property name="nuget.path" value="?NuGet.CommandLine.DEFAULT.nupkg"/>
+          <property name="nuget.sources" value="http://nuget.bfl.local/api/v2/&#xA;https://www.nuget.org/api/v2/"/>
+          <property name="nuget.updatePackages.mode" value="sln"/>
+          <property name="nugetCustomPath" value="?NuGet.CommandLine.DEFAULT.nupkg"/>
+          <property name="nugetPathSelector" value="?NuGet.CommandLine.DEFAULT.nupkg"/>
+          <property name="sln.path" value="{0}"/>
+          <property name="teamcity.step.mode" value="default"/>
+        </properties>
+      </step>
+      <step id="RUNNER_1" name="Compile Solution" type="VS.Solution">
+        <properties>
+          <property name="build-file-path" value="{0}"/>
+          <property name="msbuild.prop.Configuration" value="Release"/>
+          <property name="msbuild.prop.Platform" value="Any CPU"/>
+          <property name="msbuild_version" value="4.5"/>
+          <property name="run-platform" value="x86"/>
+          <property name="targets" value="Rebuild"/>
+          <property name="teamcity.step.mode" value="default"/>
+          <property name="toolsVersion" value="4.0"/>
+          <property name="vs.version" value="vs2012"/>
+        </properties>
+      </step>
+      <step id="RUNNER_23" name="Run unit tests" type="MSTest" disabled="true">
+        <properties>
+          <property name="dotNetCoverage.NCover.HTMLReport.File.Sort" value="0"/>
+          <property name="dotNetCoverage.NCover.HTMLReport.File.Type" value="1"/>
+          <property name="dotNetCoverage.NCover.platformBitness" value="x86"/>
+          <property name="dotNetCoverage.NCover.platformVersion" value="v2.0"/>
+          <property name="dotNetCoverage.NCover.Reg" value="selected"/>
+          <property name="dotNetCoverage.NCover3.args" value="//ias .*"/>
+          <property name="dotNetCoverage.NCover3.platformBitness" value="x86"/>
+          <property name="dotNetCoverage.NCover3.platformVersion" value="v2.0"/>
+          <property name="dotNetCoverage.NCover3.Reg" value="selected"/>
+          <property name="dotNetCoverage.NCover3.reporter.executable.args" value="//or FullCoverageReport:Html:{teamcity.report.path}"/>
+          <property name="dotNetCoverage.PartCover.includes" value="[*]*"/>
+          <property name="dotNetCoverage.PartCover.platformBitness" value="x86"/>
+          <property name="dotNetCoverage.PartCover.platformVersion" value="v2.0"/>
+          <property name="dotNetCoverage.PartCover.Reg" value="selected"/>
+          <property name="dotNetTestRunner.Type" value="MSTest"/>
+          <property name="mstest_assemblies_list" value="Source\**\bin\Release\*.Tests.*.dll&#xA;Source\**\bin\Release\*.Test.*.dll&#xA;Source\**\bin\Release\*.Tests.dll&#xA;Source\**\bin\Release\*.Test.dll"/>
+          <property name="mstest_enable" value="checked"/>
+          <property name="mstest_path" value="%system.MSTest.11.0%"/>
+          <property name="teamcity.step.mode" value="default"/>
+        </properties>
+      </step>
+    </steps>
+    <vcs-settings checkout-mode="ON_SERVER" labeling-type="NONE" labeling-pattern="build-%system.build.number%">
+      <vcs-entry-ref root-id="Beazley_AgressoVendors" set-label="false" />
+    </vcs-settings>
+    <requirements>
+      <exists name="DotNetFramework4.0_x86" />
+      <exists name="system.MSTest.11.0" />
+      <starts-with name="teamcity.agent.name" value="UK00660" />
+    </requirements>
+    <triggers>
+      <trigger id="vcsTrigger" type="vcsTrigger">
+        <properties>
+          <property name="quietPeriodMode" value="DO_NOT_USE"/>
+        </properties>
+      </trigger>
+    </triggers>
+    <features>
+      <feature id="JetBrains.AssemblyInfo" type="JetBrains.AssemblyInfo">
+        <properties>
+          <property name="assembly-format" value="%version_major%.%version_minor%.%version_patch%.%build.counter%"/>
+          <property name="file-format" value="%version_major%.%version_minor%.%version_patch%.%build.counter%"/>
+          <property name="info-format" value="%version_major%.%version_minor%.%version_patch%"/>
+        </properties>
+      </feature>
+    </features>
+    <artifact-publishing paths="Source/Beazley.AgressoVendors.Endpoint/bin/release =&gt; Beazley.AgressoVendors.zip!Release&#xA;Scripts =&gt; Beazley.AgressoVendors.zip!Scripts" />
+    <cleanup />
+  </settings>
+</build-type>
+

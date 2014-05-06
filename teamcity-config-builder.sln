@@ -3,6 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "shell", "shell\shell.csproj", "{F0563802-BEEA-4321-856B-14BAA10A004B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{46EA111C-F8C1-4CCC-A270-A1722EB63B8D}"
+	ProjectSection(SolutionItems) = preProject
+		template\build.xml = template\build.xml
+		template\drop.xml = template\drop.xml
+		template\release.xml = template\release.xml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

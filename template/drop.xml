@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<build-type>
+  <settings>
+    <options>
+      <option name="allowExternalStatus" value="true" />
+      <option name="buildNumberPattern" value="%dep.{0}.build.number%" />
+      <option name="cleanBuild" value="true" />
+      <option name="executionTimeoutMin" value="5" />
+      <option name="maximumNumberOfBuilds" value="1" />
+    </options>
+    <artifact-dependencies>
+      <artifact-dependency id="0" type="artifact_dependency">
+        <properties>
+          <property name="cleanDestinationDirectory" value="false"/>
+          <property name="pathRules" value="+:artifacts.zip!**"/>
+          <property name="revisionName" value="sameChainOrLastFinished"/>
+          <property name="revisionValue" value="latest.sameChainOrLastFinished"/>
+        </properties>
+        <source-buildType id="{0}" name="{1}" href="/httpAuth/app/rest/buildTypes/id:{0}" projectId="{2}" projectName="{3}" webUrl="http://teamcity.bfl.local/viewType.html?buildTypeId={0}"/>
+      </artifact-dependency>
+    </artifact-dependencies>
+    <snapshot-dependencies>
+      <snapshot-dependency id="{0}" type="snapshot_dependency">
+        <properties>
+          <property name="run-build-if-dependency-failed" value="false"/>
+          <property name="run-build-on-the-same-agent" value="false"/>
+          <property name="take-started-build-with-same-revisions" value="true"/>
+          <property name="take-successful-builds-only" value="true"/>
+        </properties>
+        <source-buildType id="{0}" name="{1}" href="/httpAuth/app/rest/buildTypes/id:{0}" projectName="{3}" projectId="{2}" webUrl="http://teamcity.bfl.local/viewType.html?buildTypeId={0}"/>
+      </snapshot-dependency>
+    </snapshot-dependencies>
+  </settings>
+</build-type>

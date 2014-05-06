@@ -42,13 +42,9 @@ namespace TeamCityConfigBuilder.Shell
                 s_SolutionParser_solutionReader.SetValue(solutionParser, streamReader, null);
                 s_SolutionParser_parseSolution.Invoke(solutionParser, null);
             }
-            var projects = new List<SolutionProject>();
             var array = (Array)s_SolutionParser_projects.GetValue(solutionParser, null);
-            for (int i = 0; i < array.Length; i++)
-            {
-                projects.Add(new SolutionProject(array.GetValue(i)));
-            }
-            this.Projects = projects;
+            var projects = array.Cast<object>().Select((t, i) => new SolutionProject(array.GetValue(i), Path.GetDirectoryName(solutionFileName))).ToList();
+            Projects = projects;
         }
     }
 }

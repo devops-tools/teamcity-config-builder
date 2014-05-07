@@ -32,51 +32,62 @@ namespace TeamCityConfigBuilder.Shell
                         var buildId = string.Concat(tcp.Id, "_", buildConfig);
                         if (tcp.BuildConfigurations == null || !tcp.BuildConfigurations.Any(x => x.Id.Equals(buildId)))
                         {
+                            Console.WriteLine("/{0}", buildId.Replace('_', '/'));
                             var bc = CreateBuildConfiguration(buildConfig, buildId, tcp.Id);
                             var xml = XDocument.Load(Path.Combine(ConfigurationManager.AppSettings.Get("TemplateFolder"), string.Concat(buildConfig, ".xml"))).Root;
+                            Console.WriteLine(" - Settings");
                             foreach (var setting in xml.Descendants("option").Select(x => new { Name = x.Attribute("name").Value, x.Attribute("value").Value }))
                             {
-                                if (setting.Name == "buildNumberPattern" && buildConfig != "Build")
-                                {
-                                    Put(
-                                        string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/settings/", setting.Name),
-                                        string.Format(setting.Value, buildConfig == "Drop" ? buildId.Replace("_Drop", "_Build") : buildId.Replace("_Release", "_Drop")));
-                                }
-                                else
-                                {
-                                    Put(
-                                        string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/settings/", setting.Name),
-                                        setting.Value);
-                                }
+                                var url = string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/settings/", setting.Name);
+                                var payload = (setting.Name == "buildNumberPattern" && buildConfig != "Build")
+                                    ? string.Format(setting.Value, buildConfig == "Drop" ? buildId.Replace("_Drop", "_Build") : buildId.Replace("_Release", "_Drop"))
+                                    : setting.Value;
+                                Console.WriteLine("  - Setting: {0}, value: {1}", setting.Name, payload);
+                                Put(url, payload);
                             }
+                            Console.WriteLine(" - Parameters");
                             foreach (var param in xml.Descendants("param").Select(x => new { Name = x.Attribute("name").Value, x.Attribute("value").Value }))
                             {
-                                switch (param.Name)
+                                var url = string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/parameters/", param.Name);
+                                var payload = (param.Name == "drop_folder")
+                                    ? string.Format(param.Value, buildProject.Name, buildProject.Branch)
+                                    : param.Value;
+                                Console.WriteLine("  - Parameter: {0}, value: {1}", param.Name, payload);
+                                Put(url, payload);
+                            }
+                            Console.WriteLine(" - Steps");
+                            foreach (var stepXml in xml.Descendants("step"))
+                            {
+                                //build step special case: package web application for web deploy. repeat step for each web project in solution.
+                                switch (stepXml.Attribute("id").Value)
                                 {
-                                    case "drop_folder":
-                                        Put(
-                                            string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/parameters/", param.Name),
-                                            string.Format(param.Value, buildProject.Name, buildProject.Branch));
+                                    case "RUNNER_128":
+                                        foreach (var sp in buildProject.Solution.Projects.Where(x=>x.OutputClass == OutputClass.WebDeploy))
+                                        {
+                                            Console.WriteLine("  - Step: {0}", stepXml.Attribute("name").Value.Replace("{0}", sp.ProjectName));
+                                            Post(
+                                                string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/steps"),
+                                                stepXml.ToString()
+                                                    .Replace("{0}", sp.ProjectName)
+                                                    .Replace("{1}", Path.Combine("Source", sp.RelativePath)));
+                                        }
                                         break;
                                     default:
-                                        Put(
-                                            string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/parameters/", param.Name),
-                                            param.Value);
+                                        Console.WriteLine("  - Step: {0}", stepXml.Attribute("name").Value);
+                                        Post(
+                                            string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/steps"),
+                                            stepXml.ToString().Replace("{0}", string.Concat(@"Source\", buildProject.Name, ".sln")));
                                         break;
                                 }
                             }
-                            foreach (var stepXml in xml.Descendants("step").Select(x => x.ToString()))
-                            {
-                                Post(
-                                    string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/steps"),
-                                    stepXml.Replace("{0}", string.Concat(@"Source\", buildProject.Name, ".sln")));
-                            }
+                            Console.WriteLine(" - Features");
                             foreach (var featureXml in xml.Descendants("feature").Select(x => x.ToString()))
                             {
                                 Post(
                                     string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/features"),
                                     featureXml);
                             }
+                            Console.WriteLine(" - Triggers");
                             foreach (var triggerXml in xml.Descendants("trigger").Select(x => x.ToString()))
                             {
                                 Post(
@@ -86,14 +97,16 @@ namespace TeamCityConfigBuilder.Shell
                             switch (buildConfig)
                             {
                                 case "Build":
-                                    if (buildProject.Artifacts.Any())
+                                    if (/*buildProject.Artifacts.Any()*/true)
                                     {
+                                        Console.WriteLine(" - Artifacts");
                                         Put(
                                             string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/settings/artifactRules"),
-                                            string.Format("{0}\nScripts => artifacts.zip!Scripts", string.Join("\n", buildProject.Artifacts.Select(x => string.Format("{0} => artifacts.zip!{1}", Path.Combine("Source", x.RelativePath), x.Name)))));
+                                            string.Format("{0}\nWebDeploy => artifacts.zip!WebDeploy\nScripts => artifacts.zip!Scripts", string.Join("\n", buildProject.Artifacts.Select(x => string.Format("{0} => artifacts.zip!{1}", x.RelativePath, x.Name)))));
                                     }
                                     if (!string.IsNullOrWhiteSpace(buildProject.VcsRoot) && buildProject.VcsRoot.StartsWith("//depot/", StringComparison.InvariantCultureIgnoreCase))
                                     {
+                                        Console.WriteLine(" - VcsRoots");
                                         Post(
                                                 string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/vcs-roots"),
                                                 string.Format(File.ReadAllText(Path.Combine(ConfigurationManager.AppSettings.Get("TemplateFolder"), "vcs-p4.xml")),
@@ -106,6 +119,7 @@ namespace TeamCityConfigBuilder.Shell
                                                     "zxx99860a5d5a21aa52ec3295a7ca7d1819"));
                                         foreach (var vcsRootXml in xml.Descendants("vcs-root-entry").Select(x => x.ToString()))
                                         {
+                                            Console.WriteLine("  - VcsRoot: {0}", string.Concat(tcp.Id, "_Source"));
                                             Post(
                                                 string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/vcs-root-entries"),
                                                 string.Format(vcsRootXml,
@@ -116,8 +130,10 @@ namespace TeamCityConfigBuilder.Shell
                                     }
                                     break;
                                 case "Drop":
+                                    Console.WriteLine(" - ArtifactDependencies");
                                     foreach (var dependencyXml in xml.Descendants("artifact-dependency").Select(x => x.ToString()))
                                     {
+                                        Console.WriteLine("  - ArtifactDependency: {0}", buildId.Replace("_Drop", "_Build"));
                                         Post(
                                             string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/artifact-dependencies"),
                                             string.Format(dependencyXml,
@@ -126,8 +142,10 @@ namespace TeamCityConfigBuilder.Shell
                                                 tcp.Id,
                                                 tcp.Name));
                                     }
+                                    Console.WriteLine(" - SnapshotDependencies");
                                     foreach (var dependencyXml in xml.Descendants("snapshot-dependency").Select(x => x.ToString()))
                                     {
+                                        Console.WriteLine("  - SnapshotDependency: {0}", buildId.Replace("_Drop", "_Build"));
                                         Post(
                                             string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/snapshot-dependencies"),
                                             string.Format(dependencyXml,
@@ -136,6 +154,7 @@ namespace TeamCityConfigBuilder.Shell
                                                 tcp.Id,
                                                 tcp.Name));
                                     }
+                                    Console.WriteLine(" - VcsRoots");
                                     Post(
                                             string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/vcs-roots"),
                                             string.Format(File.ReadAllText(Path.Combine(ConfigurationManager.AppSettings.Get("TemplateFolder"), "vcs-robocopy.xml")),
@@ -145,19 +164,23 @@ namespace TeamCityConfigBuilder.Shell
                                                 tcp.Name));
                                     foreach (var vcsRootXml in xml.Descendants("vcs-root-entry").Select(x => x.ToString()))
                                     {
+                                        Console.WriteLine("  - VcsRoot: {0}", string.Concat(tcp.Id, "_RoboCopy"));
                                         Post(
                                             string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/vcs-root-entries"),
                                             string.Format(vcsRootXml,
                                                 string.Concat(tcp.Id, "_RoboCopy"),
                                                 "RoboCopy"));
                                     }
+                                    Console.WriteLine(" - Artifacts");
                                     Put(
                                         string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/settings/artifactRules"),
                                         @"%drop_folder%\%build.number% => artifacts.zip");
                                     break;
                                 case "Release":
+                                    Console.WriteLine(" - ArtifactDependencies");
                                     foreach (var dependencyXml in xml.Descendants("artifact-dependency").Select(x => x.ToString()))
                                     {
+                                        Console.WriteLine("  -ArtifactDependency: {0}", buildId.Replace("_Release", "_Drop"));
                                         Post(
                                             string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/artifact-dependencies"),
                                             string.Format(dependencyXml,
@@ -166,8 +189,10 @@ namespace TeamCityConfigBuilder.Shell
                                                 tcp.Id,
                                                 tcp.Name));
                                     }
+                                    Console.WriteLine(" - SnapshotDependencies");
                                     foreach (var dependencyXml in xml.Descendants("snapshot-dependency").Select(x => x.ToString()))
                                     {
+                                        Console.WriteLine("  - SnapshotDependency: {0}", buildId.Replace("_Release", "_Drop"));
                                         Post(
                                             string.Concat(ConfigurationManager.AppSettings.Get("TeamCityUrl").TrimEnd('/'), "/httpAuth/app/rest/buildTypes/", bc.Id, "/snapshot-dependencies"),
                                             string.Format(dependencyXml,
@@ -182,6 +207,8 @@ namespace TeamCityConfigBuilder.Shell
                     }
                 }
             }
+            Console.WriteLine("press any key to exit");
+            Console.ReadKey();
         }
 
         static TeamCityProject GetProject(string id)

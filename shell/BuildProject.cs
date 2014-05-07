@@ -13,10 +13,26 @@ namespace TeamCityConfigBuilder.Shell
             Branch = Path.GetFileName(Path.GetDirectoryName(Path.GetDirectoryName(solutionPath)));
             Solution = new Solution(solutionPath);
             Artifacts = new List<Artifact>();
-            Artifacts.AddRange(Solution.Projects.Where(x => x.OutputClass != OutputClass.ClassLibrary).Select(x => new Artifact(x.ProjectName, Path.Combine(Path.GetDirectoryName(x.RelativePath), x.OutputPath), x.OutputClass)));
-            if (SolutionDirectory != null && SolutionDirectory.Contains("\\depot\\"))
+            foreach (var x in Solution.Projects.Where(x => x.OutputClass != OutputClass.ClassLibrary && !string.IsNullOrWhiteSpace(x.OutputPath)))
             {
-                VcsRoot = '/' + Path.GetDirectoryName(SolutionDirectory).Substring(SolutionDirectory.IndexOf("\\depot\\")).Replace('\\', '/');
+                switch (x.OutputClass)
+                {
+                    case OutputClass.NServiceBus:
+                    case OutputClass.WindowsService:
+                        Artifacts.Add(new Artifact(x.ProjectName, Path.Combine("Source", Path.GetDirectoryName(x.RelativePath), x.OutputPath), x.OutputClass));
+                        break;
+                    //case OutputClass.WebDeploy:
+                    //    break;
+                }
+            }
+            //Artifacts.AddRange(Solution.Projects.Where(x => x.OutputClass != OutputClass.ClassLibrary && !string.IsNullOrWhiteSpace(x.OutputPath)).Select(x => new Artifact(x.ProjectName, Path.Combine(Path.GetDirectoryName(x.RelativePath), x.OutputPath), x.OutputClass)));
+            if (SolutionDirectory != null)
+            {
+                VcsRoot = SolutionDirectory.Contains("\\depot\\")
+                    ? '/' + Path.GetDirectoryName(SolutionDirectory).Substring(SolutionDirectory.IndexOf("\\depot\\")).Replace('\\', '/')
+                    : SolutionDirectory.Contains("\\projects\\")
+                        ? "//depot" + Path.GetDirectoryName(SolutionDirectory).Substring(SolutionDirectory.IndexOf("\\projects\\")).Replace('\\', '/')
+                        : null;
             }
         }
 

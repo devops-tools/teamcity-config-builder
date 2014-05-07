@@ -37,15 +37,39 @@ namespace TeamCityConfigBuilder.Shell
             RelativePath = Info["RelativePath"].GetValue(solutionProject, null) as string;
             ProjectGuid = Info["ProjectGuid"].GetValue(solutionProject, null) as string;
 
-            var xml = XDocument.Load(Path.Combine(rootPath, RelativePath));
-            XNamespace ns = xml.Root.Attribute("xmlns").Value;
-            OutputType = xml
-                .Element(ns + "Project")
-                .Element(ns + "PropertyGroup")
-                .Element(ns + "OutputType").Value;
-            OutputPath = xml.Descendants(ns + "OutputPath").First(x => x.Parent.Attribute("Condition").Value.Contains("'$(Configuration)|$(Platform)' == 'Release|AnyCPU'")).Value.TrimEnd('\\');
-            if (ProjectName != null && OutputType == "Library" && (ProjectName.ToLower().Contains(".nsb") || ProjectName.ToLower().Contains(".endpoint")))
-                OutputClass = OutputClass.NServiceBus;
+            var projectFile = Path.Combine(rootPath, RelativePath);
+            //if (!projectFile.ToLower().EndsWith(".csproj") && Directory.Exists(projectFile))
+                //projectFile = Directory.GetFiles(projectFile, "*.csproj", SearchOption.TopDirectoryOnly).FirstOrDefault();
+            if (/*projectFile != null &&*/ File.Exists(projectFile)
+                && !Path.GetExtension(projectFile).StartsWith(".wix", StringComparison.InvariantCultureIgnoreCase)
+                && Path.GetExtension(projectFile).EndsWith("proj", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var xml = XDocument.Load(projectFile);
+                XNamespace ns = xml.Root.Attribute("xmlns").Value;
+                OutputType = xml
+                    .Element(ns + "Project")
+                    .Element(ns + "PropertyGroup")
+                    .Element(ns + "OutputType").Value;
+                OutputPath = xml.Descendants(ns + "OutputPath").First(x => x.Parent.Attribute("Condition").Value.Contains("'$(Configuration)|$(Platform)' == 'Release|AnyCPU'")).Value.TrimEnd('\\');
+                var projectFolder = Path.GetDirectoryName(projectFile);
+                
+                // web app?
+                if (File.Exists(Path.Combine(projectFolder, "web.config")))
+                    OutputClass = OutputClass.WebDeploy;
+
+                // nsb?
+                else if (File.Exists(Path.Combine(projectFolder, "app.config"))
+                    && ProjectName != null && OutputType == "Library"
+                    && (!ProjectName.ToLower().Contains(".test"))
+                    && (ProjectName.ToLower().Contains(".nsb") || ProjectName.ToLower().Contains(".endpoint")))
+                    OutputClass = OutputClass.NServiceBus;
+
+                // win svc?
+                else if (File.Exists(Path.Combine(projectFolder, "app.config"))
+                    && File.Exists(Path.Combine(projectFolder, "program.cs"))
+                    && File.ReadAllText(Path.Combine(projectFolder, "program.cs")).Contains("ServiceBase.Run"))
+                    OutputClass = OutputClass.WindowsService;
+            }
         }
     }
 }

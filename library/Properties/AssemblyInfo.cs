@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("TeamCityConfigBuilder.Shell")]
+[assembly: AssemblyTitle("TeamCityConfigBuilder.Library")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Beazley")]
-[assembly: AssemblyProduct("TeamCityConfigBuilder.Shell")]
+[assembly: AssemblyProduct("TeamCityConfigBuilder.Library")]
 [assembly: AssemblyCopyright("Copyright © Beazley 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("ff3deec0-92d7-4a28-821d-2db73935a9a3")]
+[assembly: Guid("d8494f38-d606-4530-8018-b889a39f8f16")]
 
 // Version information for an assembly consists of the following four values:
 //

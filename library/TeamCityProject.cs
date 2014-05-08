@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace TeamCityConfigBuilder.Shell
+namespace TeamCityConfigBuilder.Library
 {
     public class TeamCityProject
     {

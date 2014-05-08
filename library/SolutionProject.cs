@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
 
-namespace TeamCityConfigBuilder.Shell
+namespace TeamCityConfigBuilder.Library
 {
     [DebuggerDisplay("{ProjectName}, {RelativePath}, {ProjectGuid}")]
     public class SolutionProject

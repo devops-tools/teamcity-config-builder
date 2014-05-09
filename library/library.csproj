@@ -39,9 +39,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Artifact.cs" />
     <Compile Include="Builder.cs" />
     <Compile Include="BuildProject.cs" />
     <Compile Include="IMessageObserver.cs" />
+    <Compile Include="OutputClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Solution.cs" />
     <Compile Include="SolutionProject.cs" />

@@ -82,7 +82,7 @@
           <property name="dotNetCoverage.PartCover.Reg" value="selected"/>
           <property name="msbuild_version" value="4.5"/>
           <property name="run-platform" value="x86"/>
-          <property name="runnerArgs" value="/P:PackageLocation=..\..\..\WebDeploy\{0}.zip;IgnoreDeployManagedRuntimeVersion=true;_PackageTempDir=C:\inetpub\wwwroot\{0};IncludeIisSettings=true;IncludeAppPool=true;DeployEncryptKey=password"/>
+          <property name="runnerArgs" value="/P:PackageLocation=..\..\..\WebDeploy\{0}\Package.zip;IgnoreDeployManagedRuntimeVersion=true;_PackageTempDir=C:\inetpub\wwwroot\{0};IncludeIisSettings=true;IncludeAppPool=true;DeployEncryptKey=password"/>
           <property name="targets" value="Package"/>
           <property name="teamcity.step.mode" value="default"/>
           <property name="toolsVersion" value="4.0"/>

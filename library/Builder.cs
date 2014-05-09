@@ -17,7 +17,7 @@ namespace TeamCityConfigBuilder.Library
             {
                 TeamCityProject tcp = null;
                 var projectTree = buildProject.Name.Split('.').ToList();
-                projectTree.Add(buildProject.Branch);
+                projectTree.Add(buildProject.Branch.Replace(".", string.Empty));
                 for (var i = 0; i < projectTree.Count; i++)
                 {
                     var projectId = string.Join("_", projectTree.GetRange(0, i + 1));
@@ -114,7 +114,7 @@ namespace TeamCityConfigBuilder.Library
                                         observer.Notify(" - Artifacts");
                                         Put(
                                             string.Concat(teamCityUrl, "/httpAuth/app/rest/buildTypes/", bc.Id, "/settings/artifactRules"),
-                                            string.Format("{0}\nWebDeploy => artifacts.zip!WebDeploy\nScripts => artifacts.zip!Scripts", string.Join("\n", buildProject.Artifacts.Select(x => string.Format("{0} => artifacts.zip!{1}", x.RelativePath, x.Name)))),
+                                            string.Join("\n", buildProject.Solution.Projects.Where(x => x.Artifact != null).Select(x => string.Format("{0} => {1}.zip", x.Artifact.RelativePath, x.Artifact.Name))),
                                             teamCityUsername, teamCityPassword);
                                     }
                                     if (!string.IsNullOrWhiteSpace(buildProject.VcsRoot) && buildProject.VcsRoot.StartsWith("//depot/", StringComparison.InvariantCultureIgnoreCase))
@@ -129,7 +129,7 @@ namespace TeamCityConfigBuilder.Library
                                                 tcp.Name,
                                                 buildProject.VcsRoot,
                                                 "svc_tcbuild_dev",
-                                                "zxx99860a5d5a21aa52ec3295a7ca7d1819"),
+                                                "Gti%xEkf&amp;8yj"),
                                             teamCityUsername, teamCityPassword);
                                         foreach (var vcsRootXml in xml.Descendants("vcs-root-entry").Select(x => x.ToString()))
                                         {

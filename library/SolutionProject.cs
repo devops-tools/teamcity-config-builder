@@ -30,6 +30,7 @@ namespace TeamCityConfigBuilder.Library
         public string OutputPath { get; private set; }
         public string OutputType { get; private set; }
         public OutputClass OutputClass { get; private set; }
+        public Artifact Artifact { get; private set; }
 
         public SolutionProject(object solutionProject, string rootPath)
         {
@@ -70,6 +71,22 @@ namespace TeamCityConfigBuilder.Library
                     && File.ReadAllText(Path.Combine(projectFolder, "program.cs")).Contains("ServiceBase.Run"))
                     OutputClass = OutputClass.WindowsService;
             }
+            if (ProjectName != null)
+                switch (OutputClass)
+                {
+                    case OutputClass.NServiceBus:
+                    case OutputClass.WindowsService:
+                        Artifact = new Artifact(ProjectName, Path.Combine("Source", Path.GetDirectoryName(RelativePath), OutputPath), OutputClass);
+                        break;
+                    case OutputClass.WebDeploy:
+                        Artifact = new Artifact(ProjectName, Path.Combine("WebDeploy", ProjectName), OutputClass);
+                        break;
+                    default:
+                        Artifact = null;
+                        break;
+                }
+            else
+                Artifact = null;
         }
     }
 }

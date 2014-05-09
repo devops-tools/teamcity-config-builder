@@ -62,9 +62,7 @@ namespace TeamCityConfigBuilder.Library
                             foreach (var param in xml.Descendants("param").Select(x => new { Name = x.Attribute("name").Value, x.Attribute("value").Value }))
                             {
                                 var url = string.Concat(teamCityUrl, "/httpAuth/app/rest/buildTypes/", bc.Id, "/parameters/", param.Name);
-                                var payload = (param.Name == "drop_folder")
-                                    ? string.Format(param.Value, buildProject.Name, buildProject.Branch)
-                                    : param.Value;
+                                var payload = param.Value;
                                 observer.Notify("  - Parameter: {0}, value: {1}", param.Name, payload);
                                 Put(url, payload, teamCityUsername, teamCityPassword);
                             }
@@ -160,7 +158,9 @@ namespace TeamCityConfigBuilder.Library
                                                 buildId.Replace("_Drop", "_Build"),
                                                 "Build",
                                                 tcp.Id,
-                                                tcp.Name),
+                                                tcp.Name,
+                                                //test this dependency artifact rule when you get back from the pub!
+                                                string.Join("&#xD;&#xA;", buildProject.Solution.Projects.Where(x => x.Artifact != null).Select(x => string.Format("+:{0}.zip!** =&gt; {0}", x.Artifact.Name)))),
                                             teamCityUsername, teamCityPassword);
                                     }
                                     observer.Notify(" - SnapshotDependencies");

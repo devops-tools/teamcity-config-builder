@@ -13,6 +13,7 @@ namespace TeamCityConfigBuilder.Shell
                 ConfigurationManager.AppSettings.Get("TeamCityUrl"),
                 ConfigurationManager.AppSettings.Get("TeamCityUsername"),
                 ConfigurationManager.AppSettings.Get("TeamCityPassword"),
+                ConfigurationManager.AppSettings.Get("Overwrite") == "true",
                 new ConsoleMessageObserver());
             Console.WriteLine("press any key to exit");
             Console.ReadKey();

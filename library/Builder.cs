@@ -9,7 +9,7 @@ namespace TeamCityConfigBuilder.Library
 {
     public static class Builder
     {
-        public static void Run(string discoveryFolder, string templateFolder, string teamCityUrl, string teamCityUsername, string teamCityPassword, IMessageObserver observer)
+        public static void Run(string discoveryFolder, string templateFolder, string teamCityUrl, string teamCityUsername, string teamCityPassword, bool overwrite, IMessageObserver observer)
         {
             var buildProjects = Directory.GetFiles(discoveryFolder, "*.sln", SearchOption.AllDirectories)
                 .Select(x => new BuildProject(x));
@@ -22,6 +22,11 @@ namespace TeamCityConfigBuilder.Library
                 {
                     var projectId = string.Join("_", projectTree.GetRange(0, i + 1));
                     tcp = GetProject(projectId, teamCityUrl, teamCityUsername, teamCityPassword);
+                    if ((i == (projectTree.Count - 1)) && overwrite && tcp != null && tcp.BuildConfigurations != null && tcp.BuildConfigurations.Any())
+                    {
+                        DeleteProject(tcp.Id, teamCityUrl, teamCityUsername, teamCityPassword);
+                        tcp = null;
+                    }
                     if (tcp == null)
                     {
                         observer.Notify("CreateProject: {0}", projectId);
@@ -38,7 +43,7 @@ namespace TeamCityConfigBuilder.Library
                     foreach (var buildConfig in new[] { "Build", "Drop", "Release" })
                     {
                         var buildId = string.Concat(tcp.Id, "_", buildConfig);
-                        if (tcp.BuildConfigurations == null || !tcp.BuildConfigurations.Any(x => x.Id.Equals(buildId)))
+                        if (overwrite || tcp.BuildConfigurations == null || !tcp.BuildConfigurations.Any(x => x.Id.Equals(buildId)))
                         {
                             observer.Notify("/{0}", buildId.Replace('_', '/'));
                             var bc = CreateBuildConfiguration(buildConfig, buildId, tcp.Id, teamCityUrl, teamCityUsername, teamCityPassword);
@@ -291,6 +296,18 @@ namespace TeamCityConfigBuilder.Library
             var payload = string.Format("<newBuildTypeDescription name='{0}' id='{1}' />", name, id);
             Post(url, payload, teamCityUsername, teamCityPassword);
             return GetBuildConfiguration(id, teamCityUrl, teamCityUsername, teamCityPassword);
+        }
+
+        static void DeleteProject(string id, string teamCityUrl, string teamCityUsername, string teamCityPassword)
+        {
+            string response;
+            using (var client = new WebClient())
+            {
+                var up = string.Format("{0}:{1}", teamCityUsername, teamCityPassword);
+                var credentials = Convert.ToBase64String(Encoding.ASCII.GetBytes(up), Base64FormattingOptions.None);
+                client.Headers[HttpRequestHeader.Authorization] = "Basic " + credentials;
+                response = client.UploadString(string.Concat(teamCityUrl, "/httpAuth/app/rest/projects/id:", id), "DELETE", string.Empty);
+            }
         }
 
         static void Post(string url, string payload, string username, string password)
